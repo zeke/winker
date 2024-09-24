@@ -7,10 +7,7 @@ An experiment in using [fofr/expression-editor](https://replicate.com/fofr/expre
 
 Here's the resulting animation:
 
-<video width="100%" autoplay loop muted playsinline>
-  <source src="zeke.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+https://github.com/user-attachments/assets/f25d48fd-0e71-4f3f-9224-8d7cb60b3137
 
 ## Usage
 
