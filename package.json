@@ -1,0 +1,14 @@
+{
+  "type": "module",
+  "devDependencies": {
+    "standard": "^17.1.2"
+  },
+  "scripts": {
+    "test": "standard --fix && node index.js",
+    "lint": "standard --fix"
+  },
+  "dependencies": {
+    "download": "^8.0.0",
+    "replicate": "^0.33.0"
+  }
+}
