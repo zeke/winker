@@ -2,10 +2,9 @@ import Replicate from 'replicate'
 import download from 'download'
 import { readFile, mkdir, rm } from 'node:fs/promises'
 import path from 'path'
-import { exec } from 'child_process'
-import { promisify } from 'util'
+import videoshow from 'videoshow'
+import getImageSize from 'image-size'
 
-const execAsync = promisify(exec)
 const replicate = new Replicate()
 const model = 'fofr/expression-editor:bf913bc90e1c44ba288ba3942a538693b72e8cc7df576f3beebe56adc0a92b86'
 const input = {
@@ -22,7 +21,7 @@ await mkdir(outputsDir, { recursive: true })
 
 const maxWink = 25
 const maxSmile = 1.3
-const iterations = 25
+const iterations = 12
 
 // Generate images
 for (let i = 0; i < iterations; i++) {
@@ -37,22 +36,40 @@ for (let i = 0; i < iterations; i++) {
   await download(output[0], outputsDir, { filename })
 }
 
-// Create video from stills with FFMPEG
+// Create video from stills with videoshow
 async function createVideo () {
-  const inputPattern = path.join(outputsDir, 'output-%02d.webp')
-  const outputFile = path.join(process.cwd(), 'output.mp4')
-  const ffmpegCommand = `ffmpeg -framerate 20 -i "${inputPattern}" -filter_complex "[0:v]reverse[r];[0:v][r]concat,loop=1:250,setpts=N/50/TB" -c:v libx264 -pix_fmt yuv420p ${outputFile}`
+  const images = Array.from({ length: iterations }, (_, i) =>
+    path.join(outputsDir, `output-${i.toString().padStart(2, '0')}.webp`)
+  )
 
-  console.log('Starting video creation with ffmpeg...')
+  // Get the size of the first image
+  const firstImageSize = await getImageSize(images[0])
+  const size = `${firstImageSize.width}x${firstImageSize.height}`
 
-  try {
-    const { stdout, stderr } = await execAsync(ffmpegCommand)
-    console.log('Video creation completed successfully.')
-    if (stdout) console.log('ffmpeg output:', stdout)
-    if (stderr) console.error('ffmpeg errors:', stderr)
-  } catch (error) {
-    console.error('Error creating video:', error)
+  const videoOptions = {
+    loop: 1 / 12,
+    transition: false,
+    // videoBitrate: 1024,
+    // videoCodec: 'libx264',
+    size,
+    format: 'mp4',
+    pixelFormat: 'yuv420p'
   }
+
+  const outputFile = path.join(process.cwd(), 'output.mp4')
+
+  videoshow(images, videoOptions)
+    .save(outputFile)
+    .on('start', function (command) {
+    //   console.log('ffmpeg process started:', command)
+    })
+    .on('error', function (err, stdout, stderr) {
+      console.error('Error:', err)
+      console.error('ffmpeg stderr:', stderr)
+    })
+    .on('end', function (output) {
+      console.log('Video created successfully:', output)
+    })
 }
 
 createVideo()
